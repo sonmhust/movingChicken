@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>🐔 Gà Đi Tìm Thóc</title>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Baloo 2', cursive;
+      background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 40%, #a1c4fd 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      gap: 18px;
+    }
+
+    h1 {
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: #fff;
+      text-shadow: 0 3px 10px rgba(0,0,0,0.2);
+      letter-spacing: 1px;
+    }
+
+    .main-layout {
+      display: flex;
+      gap: 24px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    /* ── GRID ── */
+    .grid-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .grid-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255,255,255,0.5);
+      padding: 8px 16px;
+      border-radius: 50px;
+      backdrop-filter: blur(6px);
+    }
+
+    .grid-controls label { font-weight: 700; color: #5a3e28; font-size: 1rem; }
+
+    .grid-controls select {
+      font-family: 'Baloo 2', cursive;
+      font-size: 1rem;
+      padding: 4px 10px;
+      border-radius: 20px;
+      border: 2px solid #f4a261;
+      background: #fff;
+      color: #333;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .btn-new {
+      font-family: 'Baloo 2', cursive;
+      font-size: 0.95rem;
+      font-weight: 700;
+      padding: 6px 16px;
+      border-radius: 50px;
+      border: none;
+      background: linear-gradient(135deg, #f4a261, #e63946);
+      color: #fff;
+      cursor: pointer;
+      box-shadow: 0 3px 8px rgba(230,57,70,0.3);
+      transition: transform .15s, box-shadow .15s;
+    }
+    .btn-new:hover { transform: translateY(-2px); box-shadow: 0 5px 12px rgba(230,57,70,0.4); }
+    .btn-new:active { transform: translateY(0); }
+
+    #grid-wrapper {
+      padding: 10px;
+      background: rgba(255,255,255,0.45);
+      border-radius: 16px;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+    }
+
+    #grid {
+      display: grid;
+      gap: 4px;
+    }
+
+    .cell {
+      width: 68px;
+      height: 68px;
+      border-radius: 10px;
+      background: linear-gradient(145deg, #fff9f0, #ffebd0);
+      border: 2.5px solid #f4c79a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      position: relative;
+      transition: background .3s;
+    }
+    .cell.goal {
+      background: linear-gradient(145deg, #fffde7, #fff176);
+      border-color: #ffd600;
+      animation: glow 1.5s ease-in-out infinite alternate;
+    }
+    @keyframes glow {
+      from { box-shadow: 0 0 6px #ffd600; }
+      to   { box-shadow: 0 0 18px #ffab00; }
+    }
+    .cell.chicken-here { background: linear-gradient(145deg, #e8f5e9, #c8e6c9); border-color: #66bb6a; }
+
+    /* Obstacle cell */
+    .cell.obstacle {
+      background: linear-gradient(145deg, #7f8c8d, #4a4a4a);
+      border-color: #2c3e50;
+      cursor: not-allowed;
+    }
+
+    /* Chicken SVG icon */
+    .chicken-icon {
+      display: inline-block;
+      width: 42px;
+      height: 42px;
+      transition: transform 0.35s cubic-bezier(.34,1.56,.64,1);
+      user-select: none;
+      /* default faces RIGHT */
+    }
+
+    /* ── RIGHT PANEL ── */
+    .panel {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      min-width: 290px;
+      max-width: 330px;
+    }
+
+    .card {
+      background: rgba(255,255,255,0.55);
+      border-radius: 18px;
+      padding: 16px;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 4px 18px rgba(0,0,0,0.08);
+    }
+
+    .card-title {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: #5a3e28;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Step buttons */
+    .step-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .step-row label { font-weight: 700; color: #5a3e28; font-size: 0.95rem; white-space: nowrap; }
+
+    #step-input {
+      font-family: 'Baloo 2', cursive;
+      font-size: 1rem;
+      font-weight: 700;
+      width: 60px;
+      padding: 4px 8px;
+      border-radius: 12px;
+      border: 2px solid #f4a261;
+      text-align: center;
+      background: #fff;
+      color: #333;
+    }
+
+    .cmd-btn {
+      font-family: 'Baloo 2', cursive;
+      font-size: 0.82rem;
+      font-weight: 700;
+      padding: 8px 12px;
+      border-radius: 50px;
+      border: none;
+      cursor: pointer;
+      transition: transform .15s, box-shadow .15s;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.12);
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      line-height: 1.2;
+      text-align: center;
+    }
+    .cmd-btn:hover  { transform: translateY(-2px); box-shadow: 0 5px 12px rgba(0,0,0,0.18); }
+    .cmd-btn:active { transform: translateY(0); }
+
+    .btn-forward  { background: linear-gradient(135deg, #43e97b, #38f9d7); color: #1a4731; }
+    .btn-right    { background: linear-gradient(135deg, #f7971e, #ffd200); color: #4a2c00; }
+    .btn-left     { background: linear-gradient(135deg, #a18cd1, #fbc2eb); color: #3a1a5a; }
+
+    .btn-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+
+    /* Clear buttons */
+    .clear-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 4px;
+      flex-wrap: wrap;
+    }
+    .btn-clear-one { background: linear-gradient(135deg,#f8ceec,#f9a8d4); color: #7c1d4f; }
+    .btn-clear-all { background: linear-gradient(135deg,#fda085,#f6d365); color: #7c2d00; }
+
+    /* Command list */
+    #cmd-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      max-height: 210px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+    #cmd-list::-webkit-scrollbar { width: 5px; }
+    #cmd-list::-webkit-scrollbar-thumb { background: #f4a261; border-radius: 10px; }
+
+    #cmd-list li {
+      background: #fff;
+      border-radius: 10px;
+      padding: 7px 12px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: #333;
+      border-left: 4px solid #ddd;
+      transition: background .2s, border-color .2s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    #cmd-list li.active {
+      background: #fffde7;
+      border-left-color: #ffd600;
+      font-weight: 800;
+      box-shadow: 0 2px 8px rgba(255,214,0,0.3);
+    }
+    #cmd-list li.done {
+      background: #f0fff4;
+      border-left-color: #43e97b;
+      color: #666;
+    }
+    #cmd-list li .cmd-index { color: #bbb; font-size: 0.8rem; min-width: 20px; }
+
+    /* Run buttons row */
+    .run-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    #btn-run {
+      font-family: 'Baloo 2', cursive;
+      font-size: 1.1rem;
+      font-weight: 800;
+      padding: 12px 18px;
+      border-radius: 50px;
+      border: none;
+      cursor: pointer;
+      background: linear-gradient(135deg, #ff6b6b, #ee0979);
+      color: #fff;
+      box-shadow: 0 5px 18px rgba(238,9,121,0.35);
+      transition: transform .15s, box-shadow .15s;
+      flex: 1;
+      letter-spacing: 1px;
+    }
+    #btn-run:hover    { transform: translateY(-3px); box-shadow: 0 8px 22px rgba(238,9,121,0.45); }
+    #btn-run:active   { transform: translateY(0); }
+    #btn-run:disabled { background: #ccc; box-shadow: none; cursor: not-allowed; transform: none; }
+
+    #btn-step {
+      font-family: 'Baloo 2', cursive;
+      font-size: 1.1rem;
+      font-weight: 800;
+      padding: 12px 18px;
+      border-radius: 50px;
+      border: none;
+      cursor: pointer;
+      background: linear-gradient(135deg, #4facfe, #00f2fe);
+      color: #fff;
+      box-shadow: 0 5px 18px rgba(79,172,254,0.35);
+      transition: transform .15s, box-shadow .15s;
+      flex: 1;
+      letter-spacing: 0.5px;
+    }
+    #btn-step:hover    { transform: translateY(-3px); box-shadow: 0 8px 22px rgba(79,172,254,0.45); }
+    #btn-step:active   { transform: translateY(0); }
+    #btn-step:disabled { background: #ccc; box-shadow: none; cursor: not-allowed; transform: none; }
+
+    #btn-undo-step {
+      font-family: 'Baloo 2', cursive;
+      font-size: 1.1rem;
+      font-weight: 800;
+      padding: 12px 14px;
+      border-radius: 50px;
+      border: none;
+      cursor: pointer;
+      background: linear-gradient(135deg, #fa709a, #fee140);
+      color: #fff;
+      box-shadow: 0 5px 18px rgba(250,112,154,0.35);
+      transition: transform .15s, box-shadow .15s;
+    }
+    #btn-undo-step:hover    { transform: translateY(-3px); }
+    #btn-undo-step:active   { transform: translateY(0); }
+    #btn-undo-step:disabled { background: #ccc; box-shadow: none; cursor: not-allowed; transform: none; }
+
+    /* Status bar */
+    #status-bar {
+      min-height: 44px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.6);
+      padding: 10px 16px;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #444;
+      text-align: center;
+      backdrop-filter: blur(6px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: background .4s;
+    }
+    #status-bar.win  { background: linear-gradient(135deg,#d4fc79,#96e6a1); color: #1a5c2a; font-size: 1.1rem; }
+    #status-bar.lose { background: linear-gradient(135deg,#ffecd2,#fcb69f); color: #7c2d00; }
+
+    /* Confetti */
+    .confetti-container {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      pointer-events: none; overflow: hidden; z-index: 999;
+    }
+    .confetti-piece {
+      position: absolute;
+      width: 10px; height: 14px;
+      top: -20px;
+      animation: confetti-fall linear forwards;
+      border-radius: 2px;
+    }
+    @keyframes confetti-fall {
+      to { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+
+<h1>🐔 Gà Đi Tìm Thóc</h1>
+
+<div class="main-layout">
+  <!-- GRID SECTION -->
+  <div class="grid-section">
+    <div class="grid-controls">
+      <label for="size-select">Bảng:</label>
+      <select id="size-select">
+        <option value="4">4 × 4</option>
+        <option value="5" selected>5 × 5</option>
+        <option value="6">6 × 6</option>
+        <option value="7">7 × 7</option>
+        <option value="8">8 × 8</option>
+      </select>
+      <button class="btn-new" id="btn-new">🔀 Màn mới</button>
+    </div>
+    <div id="grid-wrapper"><div id="grid"></div></div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="panel">
+
+    <!-- Commands -->
+    <div class="card">
+      <div class="card-title">🕹️ Thêm lệnh</div>
+      <div class="step-row">
+        <label for="step-input">Số bước:</label>
+        <input type="number" id="step-input" value="1" min="1" max="20"/>
+      </div>
+      <div class="btn-grid">
+        <button class="cmd-btn btn-forward" id="btn-add-forward">🐔 Tiến <span id="step-preview">1</span> bước</button>
+        <button class="cmd-btn btn-right"   id="btn-add-right">↩️ Quay góc một phần tư theo chiều kim đồng hồ</button>
+        <button class="cmd-btn btn-left"    id="btn-add-left">↪️ Quay góc một phần tư ngược chiều kim đồng hồ</button>
+      </div>
+      <div class="clear-row">
+        <button class="cmd-btn btn-clear-one" id="btn-undo">⬅ Xóa lệnh cuối</button>
+        <button class="cmd-btn btn-clear-all" id="btn-clear">🗑️ Xóa tất cả</button>
+      </div>
+    </div>
+
+    <!-- Command list -->
+    <div class="card">
+      <div class="card-title">📋 Danh sách lệnh</div>
+      <ul id="cmd-list"><li style="color:#aaa;font-style:italic;border-left-color:#ddd">Chưa có lệnh nào...</li></ul>
+    </div>
+
+    <!-- Run -->
+    <div class="run-row">
+      <button id="btn-run">▶ CHẠY!</button>
+      <button id="btn-step">⏭ Bước</button>
+      <button id="btn-undo-step" title="Quay lại bước trước">↩</button>
+    </div>
+    <div id="status-bar">Thêm lệnh rồi nhấn CHẠY! 🚀</div>
+  </div>
+</div>
+
+<div class="confetti-container" id="confetti-container"></div>
+
+<!-- Chicken SVG (faces right by default) -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" id="chicken-svg-def">
+  <symbol id="chicken-sym" viewBox="0 0 64 64">
+    <!-- body -->
+    <ellipse cx="30" cy="38" rx="18" ry="14" fill="#f5a623"/>
+    <!-- head -->
+    <circle cx="50" cy="22" r="11" fill="#f5a623"/>
+    <!-- eye -->
+    <circle cx="54" cy="19" r="2.5" fill="#fff"/>
+    <circle cx="55" cy="19" r="1.2" fill="#222"/>
+    <!-- beak -->
+    <polygon points="62,22 58,20 58,24" fill="#e74c3c"/>
+    <!-- comb -->
+    <path d="M44,11 Q46,6 48,11 Q50,5 52,11 Q54,7 56,11" stroke="#e74c3c" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <!-- wattle -->
+    <ellipse cx="60" cy="27" rx="3" ry="4" fill="#e74c3c" opacity="0.85"/>
+    <!-- wing -->
+    <ellipse cx="26" cy="36" rx="10" ry="7" fill="#e8940d" transform="rotate(-15,26,36)"/>
+    <!-- legs -->
+    <line x1="24" y1="51" x2="20" y2="58" stroke="#e74c3c" stroke-width="3" stroke-linecap="round"/>
+    <line x1="32" y1="51" x2="36" y2="58" stroke="#e74c3c" stroke-width="3" stroke-linecap="round"/>
+    <!-- feet -->
+    <line x1="20" y1="58" x2="15" y2="60" stroke="#e74c3c" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="20" y1="58" x2="20" y2="62" stroke="#e74c3c" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="36" y1="58" x2="31" y2="60" stroke="#e74c3c" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="36" y1="58" x2="36" y2="62" stroke="#e74c3c" stroke-width="2.5" stroke-linecap="round"/>
+    <!-- tail feathers -->
+    <path d="M12,34 Q4,28 8,20 Q14,30 12,34Z" fill="#e8940d"/>
+    <path d="M12,36 Q2,32 4,23 Q12,33 12,36Z" fill="#f5a623"/>
+  </symbol>
+</svg>
+
+<script>
+// ── State ──────────────────────────────────────────────
+let n = 5;
+let chickenRow, chickenCol, goalRow, goalCol;
+let direction = 0; // 0=right,1=down,2=left,3=up
+let obstacles = []; // array of {r,c}
+let commands = [];
+let isRunning = false;
+
+// Step execution state
+let stepIndex = -1; // -1 = not started
+let stepHistory = []; // [{row,col,dir}] — states before each step
+
+// dirRotate: the chicken SVG already faces right (0°)
+// right=0°, down=90°, left=180°, up=270°
+const dirRotate = [0, 90, 180, 270];
+
+// ── DOM refs ───────────────────────────────────────────
+const gridEl       = document.getElementById('grid');
+const sizeSelect   = document.getElementById('size-select');
+const btnNew       = document.getElementById('btn-new');
+const stepInput    = document.getElementById('step-input');
+const stepPreview  = document.getElementById('step-preview');
+const btnForward   = document.getElementById('btn-add-forward');
+const btnRight     = document.getElementById('btn-add-right');
+const btnLeft      = document.getElementById('btn-add-left');
+const btnUndo      = document.getElementById('btn-undo');
+const btnClearAll  = document.getElementById('btn-clear');
+const btnRun       = document.getElementById('btn-run');
+const btnStepBtn   = document.getElementById('btn-step');
+const btnUndoStep  = document.getElementById('btn-undo-step');
+const cmdList      = document.getElementById('cmd-list');
+const statusBar    = document.getElementById('status-bar');
+const confettiCt   = document.getElementById('confetti-container');
+
+// ── Chicken SVG HTML ──────────────────────────────────
+function chickenHTML(deg) {
+  return `<svg class="chicken-icon" style="transform:rotate(${deg}deg)" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+    <use href="#chicken-sym"/>
+  </svg>`;
+}
+
+// ── Init grid ─────────────────────────────────────────
+function initGrid() {
+  n = parseInt(sizeSelect.value);
+  direction = 0;
+  stepIndex = -1;
+  stepHistory = [];
+  obstacles = [];
+
+  // Random positions (different cells)
+  chickenRow = Math.floor(Math.random() * n);
+  chickenCol = Math.floor(Math.random() * n);
+  do {
+    goalRow = Math.floor(Math.random() * n);
+    goalCol = Math.floor(Math.random() * n);
+  } while (goalRow === chickenRow && goalCol === chickenCol);
+
+  // Generate obstacles: ~15% of cells, not on chicken or goal
+  const numObstacles = Math.max(1, Math.floor(n * n * 0.15));
+  for (let att = 0; att < numObstacles * 5 && obstacles.length < numObstacles; att++) {
+    const or = Math.floor(Math.random() * n);
+    const oc = Math.floor(Math.random() * n);
+    if ((or === chickenRow && oc === chickenCol) || (or === goalRow && oc === goalCol)) continue;
+    if (obstacles.some(o => o.r === or && o.c === oc)) continue;
+    obstacles.push({ r: or, c: oc });
+  }
+
+  renderGrid();
+  updateBtnStates();
+  setStatus('Thêm lệnh rồi nhấn CHẠY! 🚀', '');
+}
+
+function isObstacle(r, c) {
+  return obstacles.some(o => o.r === r && o.c === c);
+}
+
+function renderGrid() {
+  gridEl.style.gridTemplateColumns = `repeat(${n}, 68px)`;
+  gridEl.innerHTML = '';
+  for (let r = 0; r < n; r++) {
+    for (let c = 0; c < n; c++) {
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      cell.id = `cell-${r}-${c}`;
+
+      if (isObstacle(r, c)) {
+        cell.classList.add('obstacle');
+        cell.textContent = '🪨';
+      } else if (r === goalRow && c === goalCol) {
+        cell.classList.add('goal');
+        cell.textContent = '⭐';
+      }
+
+      if (r === chickenRow && c === chickenCol) {
+        cell.classList.add('chicken-here');
+        cell.innerHTML = chickenHTML(dirRotate[direction]);
+      }
+      gridEl.appendChild(cell);
+    }
+  }
+}
+
+function placeChicken(r, c, dir, keepGoal = true) {
+  // Clear old chicken cell
+  const old = document.getElementById(`cell-${chickenRow}-${chickenCol}`);
+  if (old) {
+    old.classList.remove('chicken-here');
+    if (chickenRow === goalRow && chickenCol === goalCol) {
+      old.innerHTML = keepGoal ? '⭐' : '';
+      if (keepGoal) old.classList.add('goal');
+    } else if (isObstacle(chickenRow, chickenCol)) {
+      // shouldn't happen
+    } else {
+      old.innerHTML = '';
+    }
+  }
+  chickenRow = r; chickenCol = c; direction = dir;
+  const cell = document.getElementById(`cell-${r}-${c}`);
+  if (cell) {
+    cell.classList.add('chicken-here');
+    cell.innerHTML = chickenHTML(dirRotate[dir]);
+    if (r === goalRow && c === goalCol) cell.classList.remove('goal');
+  }
+}
+
+// ── Commands ──────────────────────────────────────────
+function renderCmdList() {
+  if (commands.length === 0) {
+    cmdList.innerHTML = '<li style="color:#aaa;font-style:italic;border-left-color:#ddd">Chưa có lệnh nào...</li>';
+    return;
+  }
+  cmdList.innerHTML = commands.map((cmd, i) => {
+    const icon = cmd.type === 'forward' ? '🐔' : cmd.type === 'right' ? '↩️' : '↪️';
+    const label = cmd.type === 'forward'
+      ? `Tiến ${cmd.steps} bước`
+      : cmd.type === 'right'
+        ? 'Quay góc một phần tư theo chiều kim đồng hồ'
+        : 'Quay góc một phần tư ngược chiều kim đồng hồ';
+    let cls = '';
+    if (stepIndex >= 0) {
+      if (i < stepIndex) cls = 'done';
+      else if (i === stepIndex) cls = 'active';
+    }
+    return `<li id="cmd-${i}" class="${cls}"><span class="cmd-index">${i+1}.</span>${icon} ${label}</li>`;
+  }).join('');
+}
+
+function addCommand(type, steps) {
+  if (isRunning) return;
+  commands.push({ type, steps });
+  renderCmdList();
+  updateBtnStates();
+}
+
+stepInput.addEventListener('input', () => {
+  stepPreview.textContent = stepInput.value || '1';
+});
+
+btnForward.addEventListener('click', () => {
+  const s = Math.max(1, parseInt(stepInput.value) || 1);
+  addCommand('forward', s);
+});
+btnRight.addEventListener('click', () => addCommand('right', 1));
+btnLeft .addEventListener('click', () => addCommand('left',  1));
+btnUndo .addEventListener('click', () => { if (!isRunning) { commands.pop(); renderCmdList(); updateBtnStates(); } });
+btnClearAll.addEventListener('click', () => { if (!isRunning) { commands = []; renderCmdList(); updateBtnStates(); } });
+
+// ── Step execution state ──────────────────────────────
+// stepIndex: index of the NEXT command to execute (-1 = fresh)
+// stepHistory: array of saved states {row, col, dir} before each step
+
+function resetStepState() {
+  stepIndex = -1;
+  stepHistory = [];
+  renderGrid(); // reset chicken to start pos
+}
+
+function updateBtnStates() {
+  const hasCmds = commands.length > 0;
+  btnRun.disabled     = isRunning || !hasCmds;
+  btnStepBtn.disabled = isRunning || !hasCmds;
+  btnUndoStep.disabled = isRunning || stepIndex <= 0;
+  btnUndo.disabled    = isRunning;
+  btnClearAll.disabled = isRunning;
+}
+
+// ── Run all ───────────────────────────────────────────
+const deltas = [[0,1],[1,0],[0,-1],[-1,0]]; // right,down,left,up
+
+async function runCommands() {
+  if (isRunning || commands.length === 0) return;
+  isRunning = true;
+  updateBtnStates();
+  setStatus('⏳ Đang chạy...', '');
+
+  // Reset to start
+  stepIndex = -1;
+  stepHistory = [];
+  renderGrid();
+  await sleep(300);
+
+  for (let i = 0; i < commands.length; i++) {
+    stepIndex = i;
+    renderCmdList();
+    highlightCmd(i);
+    const cmd = commands[i];
+    const stopped = await executeCmd(cmd);
+    if (stopped) {
+      clearHighlight();
+      isRunning = false;
+      stepIndex = -1;
+      updateBtnStates();
+      return;
+    }
+    await sleep(250);
+  }
+
+  clearHighlight();
+  isRunning = false;
+  stepIndex = -1;
+  renderCmdList();
+  updateBtnStates();
+  if (statusBar.textContent.includes('Đang chạy')) {
+    setStatus('✅ Xong! Gà chưa đến đích. Thử lại nhé!', '');
+  }
+}
+
+// Execute one command, return true if stopped (win/lose)
+async function executeCmd(cmd) {
+  if (cmd.type === 'right') {
+    const newDir = (direction + 1) % 4;
+    placeChicken(chickenRow, chickenCol, newDir);
+    await sleep(500);
+    return false;
+
+  } else if (cmd.type === 'left') {
+    const newDir = (direction + 3) % 4;
+    placeChicken(chickenRow, chickenCol, newDir);
+    await sleep(500);
+    return false;
+
+  } else if (cmd.type === 'forward') {
+    for (let s = 0; s < cmd.steps; s++) {
+      const [dr, dc] = deltas[direction];
+      const nr = chickenRow + dr;
+      const nc = chickenCol + dc;
+
+      // Out of bounds
+      if (nr < 0 || nr >= n || nc < 0 || nc >= n) {
+        setStatus('Ối! Gà đi lạc rồi! 🐔💨', 'lose');
+        flashCell(chickenRow, chickenCol, '#ffb3b3');
+        return true;
+      }
+
+      // Hit obstacle
+      if (isObstacle(nr, nc)) {
+        setStatus('Bịch! Gà đâm vào chướng ngại vật! 🪨', 'lose');
+        flashCell(chickenRow, chickenCol, '#ffb3b3');
+        return true;
+      }
+
+      placeChicken(nr, nc, direction);
+      await sleep(350);
+
+      // Reached goal
+      if (nr === goalRow && nc === goalCol) {
+        setStatus('🎉 Xuất sắc! Gà đã tìm được thóc!', 'win');
+        launchConfetti();
+        return true;
+      }
+    }
+    return false;
+  }
+  return false;
+}
+
+btnRun.addEventListener('click', runCommands);
+
+// ── Step-by-step ──────────────────────────────────────
+btnStepBtn.addEventListener('click', async () => {
+  if (isRunning || commands.length === 0) return;
+
+  // If starting fresh
+  if (stepIndex < 0) {
+    stepIndex = 0;
+    stepHistory = [];
+    renderGrid(); // reset to start
+    await sleep(100);
+  }
+
+  if (stepIndex >= commands.length) {
+    setStatus('✅ Đã chạy hết lệnh!', '');
+    return;
+  }
+
+  isRunning = true;
+  updateBtnStates();
+
+  // Save state before this step
+  stepHistory.push({ row: chickenRow, col: chickenCol, dir: direction });
+
+  highlightCmd(stepIndex);
+  const cmd = commands[stepIndex];
+  const stopped = await executeCmd(cmd);
+  stepIndex++;
+
+  renderCmdList();
+  clearHighlight();
+  isRunning = false;
+
+  if (!stopped && stepIndex >= commands.length) {
+    setStatus('✅ Đã chạy hết lệnh! Gà chưa đến đích.', '');
+  } else if (!stopped) {
+    setStatus(`▶ Đã chạy lệnh ${stepIndex}/${commands.length}. Nhấn Bước để tiếp.`, '');
+  }
+
+  updateBtnStates();
+});
+
+// ── Undo step ─────────────────────────────────────────
+btnUndoStep.addEventListener('click', () => {
+  if (isRunning || stepHistory.length === 0) return;
+
+  const prev = stepHistory.pop();
+  stepIndex--;
+
+  // Restore chicken position
+  chickenRow = prev.row;
+  chickenCol = prev.col;
+  direction  = prev.dir;
+  renderGrid();
+
+  renderCmdList();
+  if (stepIndex <= 0) {
+    setStatus('↩ Đã quay về trạng thái ban đầu.', '');
+    stepIndex = 0;
+  } else {
+    setStatus(`↩ Đã quay lại bước ${stepIndex}/${commands.length}.`, '');
+  }
+  updateBtnStates();
+});
+
+// ── Helpers ───────────────────────────────────────────
+function sleep(ms) { return new Promise(res => setTimeout(res, ms)); }
+
+function highlightCmd(idx) {
+  document.querySelectorAll('#cmd-list li').forEach(li => li.classList.remove('active'));
+  const li = document.getElementById(`cmd-${idx}`);
+  if (li) { li.classList.add('active'); li.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
+}
+function clearHighlight() {
+  document.querySelectorAll('#cmd-list li').forEach(li => li.classList.remove('active'));
+}
+
+function setStatus(msg, type) {
+  statusBar.textContent = msg;
+  statusBar.className = '';
+  if (type === 'win')  { statusBar.classList.add('win'); }
+  if (type === 'lose') { statusBar.classList.add('lose'); }
+}
+
+async function flashCell(r, c, color) {
+  const cell = document.getElementById(`cell-${r}-${c}`);
+  if (!cell) return;
+  const orig = cell.style.background;
+  cell.style.background = color;
+  await sleep(600);
+  cell.style.background = orig;
+}
+
+function launchConfetti() {
+  confettiCt.innerHTML = '';
+  const colors = ['#ff6b6b','#ffd200','#43e97b','#a18cd1','#f7971e','#38f9d7','#fc5c7d'];
+  for (let i = 0; i < 80; i++) {
+    const p = document.createElement('div');
+    p.className = 'confetti-piece';
+    p.style.left = Math.random() * 100 + 'vw';
+    p.style.background = colors[Math.floor(Math.random() * colors.length)];
+    p.style.animationDuration = (1.5 + Math.random() * 2) + 's';
+    p.style.animationDelay    = (Math.random() * 0.8) + 's';
+    p.style.width  = (8 + Math.random() * 8) + 'px';
+    p.style.height = (10 + Math.random() * 10) + 'px';
+    p.style.transform = `rotate(${Math.random()*360}deg)`;
+    confettiCt.appendChild(p);
+  }
+  setTimeout(() => confettiCt.innerHTML = '', 4000);
+}
+
+// ── Listeners ──────────────────────────────────────────
+sizeSelect.addEventListener('change', initGrid);
+btnNew.addEventListener('click', initGrid);
+
+// ── Boot ───────────────────────────────────────────────
+initGrid();
+</script>
+</body>
+</html>
